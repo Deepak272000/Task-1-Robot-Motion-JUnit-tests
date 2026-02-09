@@ -195,8 +195,8 @@ public class RobotEngine {
         for (int i = 0; i < steps; i++) {
             int nextX = x, nextY = y;
             switch (direction) {
-                case NORTH -> nextY = y - 1;
-                case SOUTH -> nextY = y + 1;
+                case NORTH -> nextY = y + 1;
+                case SOUTH -> nextY = y - 1;
                 case EAST -> nextX = x + 1;
                 case WEST -> nextX = x - 1;
             }
