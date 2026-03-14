@@ -1,9 +1,123 @@
 package com.coen448.robot;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 public class RobotEngineTest {
+        // Data flow test: Move with pen UP (floor unchanged)
+        @Test
+        void testMovePenUpFloorUnchanged() {
+            RobotEngine e = new RobotEngine();
+            e.initialize(4);
+            e.move(2);
+            assertEquals(2, e.getX());
+            assertEquals(0, e.getY());
+            assertEquals(0, e.getCell(0,0));
+            assertEquals(0, e.getCell(0,1));
+            assertEquals(0, e.getCell(0,2));
+            assertEquals(0, e.getCell(0,3));
+        }
+
+        // Data flow test: Move with pen DOWN (floor updated)
+        @Test
+        void testMovePenDownFloorUpdated() {
+            RobotEngine e = new RobotEngine();
+            e.initialize(4);
+            e.penDown();
+            e.move(2);
+            assertEquals(2, e.getX());
+            assertEquals(0, e.getY());
+            assertEquals(1, e.getCell(0,0));
+            assertEquals(1, e.getCell(0,1));
+            assertEquals(1, e.getCell(0,2));
+            assertEquals(0, e.getCell(0,3));
+        }
+
+        // Data flow test: Move in all directions
+        @Test
+        void testMoveAllDirections() {
+            RobotEngine e = new RobotEngine();
+            e.initialize(4);
+            e.penDown();
+            e.move(1); // NORTH (should not move, at boundary)
+            e.turnRight();
+            e.move(1); // EAST
+            assertEquals(1, e.getX());
+            assertEquals(0, e.getY());
+            e.turnRight();
+            e.move(1); // SOUTH
+            assertEquals(1, e.getX());
+            assertEquals(1, e.getY());
+            e.turnRight();
+            e.move(1); // WEST
+            assertEquals(0, e.getX());
+            assertEquals(1, e.getY());
+        }
+
+        // Data flow test: Move with steps > grid size (boundary stop)
+        @Test
+        void testMoveBeyondBoundaryStops() {
+            RobotEngine e = new RobotEngine();
+            e.initialize(3);
+            e.penDown();
+            e.turnRight();
+            e.move(10);
+            assertEquals(2, e.getX());
+            assertEquals(0, e.getY());
+        }
+    // Black-box test: Simulate CLI commands (App)
+    @Test
+    void testAppCommandSequence() {
+        RobotEngine e = new RobotEngine();
+        e.executeCommand("I 4");
+        e.executeCommand("D");
+        e.executeCommand("R");
+        e.executeCommand("M 2");
+        String status = e.executeCommand("C");
+        assertTrue(status.contains("Position: 2, 0"));
+        String floor = e.executeCommand("P");
+        assertTrue(floor.contains("*"));
+    }
+
+    // White-box test: Edge case for move (zero steps)
+    @Test
+    void testMoveZeroStepsNoChange() {
+        RobotEngine e = new RobotEngine();
+        e.initialize(3);
+        int x = e.getX();
+        int y = e.getY();
+        e.move(0);
+        assertEquals(x, e.getX());
+        assertEquals(y, e.getY());
+    }
+
+    // White-box test: Edge case for move (negative steps throws)
+    @Test
+    void testMoveNegativeStepsThrows() {
+        RobotEngine e = new RobotEngine();
+        e.initialize(3);
+        assertThrows(IllegalArgumentException.class, () -> e.move(-1));
+    }
+
+    // White-box test: Edge case for executeCommand (unknown command)
+    @Test
+    void testExecuteCommandUnknownThrows() {
+        RobotEngine e = new RobotEngine();
+        e.initialize(3);
+        assertThrows(IllegalArgumentException.class, () -> e.executeCommand("Z"));
+    }
+
+    // White-box test: replay edge case (empty history)
+    @Test
+    void testReplayHistoryEmpty() {
+        RobotEngine e = new RobotEngine();
+        e.initialize(3);
+        e.replayHistory(); // Should not throw
+        assertEquals(3, e.size());
+    }
+    // ...existing code...
 
     @Test
     void testInitializeResetsState() {
